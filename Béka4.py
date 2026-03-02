@@ -8,11 +8,15 @@ def main():
     print("FUTTATÁS ELINDULT")
 
     # Modell futtatása
+    df_year = Béka0.df_all[Béka0.df_all['Delivery Day'].dt.year == 2018]
+
+    prices_year = df_year['Price'].to_numpy()
+
     df_results = Béka2.plant_model(
         Béka1.pc_max,
         Béka1.pd_max,
         Béka1.eta,
-        Béka0.prices
+        prices_year
     )
 
     print("MODELL LEFUTOTT")

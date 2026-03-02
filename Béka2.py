@@ -13,7 +13,7 @@ def plant_model(pc_max, pd_max, eta, prices):
     print("C - tovább megyünk")
 
     # time is what we will use as the index
-    m.t = pyo.RangeSet(0, 1800)
+    m.t = pyo.RangeSet(0, len(prices)-1)
     # Parameters
     m.min_cap = 0  # no negative discharging
     m.max_cap = pc_max  # don’t charge over
@@ -34,6 +34,14 @@ def plant_model(pc_max, pd_max, eta, prices):
             return m.C[t] == m.C[t-1] + eta*m.buy[t] - m.sell[t]/eta
 
     m.storage_state = pyo.Constraint(m.t, rule=storage_state)
+
+    # FLH beállítása korlátnak
+
+    def annual_cycle_limit(m):
+        return sum(m.sell[t] for t in m.t) <= Béka1.FLH1 * pd_max
+
+    m.cycle_limit = pyo.Constraint(rule=annual_cycle_limit)
+
 
     # Make sure plant does not charge and discharge at the same time
 
@@ -58,7 +66,7 @@ def plant_model(pc_max, pd_max, eta, prices):
 
     m.over_discharge = pyo.Constraint(m.t, rule=over_discharge)
 
-# Plant cannot store more energy than its maximum capacity
+    # Plant cannot store more energy than its maximum capacity
     def charge_less_than_capacity(m, t):
         return m.C[t] <= m.max_cap
 
