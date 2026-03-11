@@ -5,7 +5,7 @@ import pyomo.environ as pyo
 import gurobipy as gp
 import numpy as np
 
-def plant_model(pc_max, pd_max, eta_t, eta_p, prices):
+def plant_model(pc_max, pd_max, eta_t, eta_p, prices, FLH):
     print("A - beléptem a függvénybe")
     print("prices_year type:", type(prices))
     print("prices_year length:", len(prices))
@@ -19,13 +19,11 @@ def plant_model(pc_max, pd_max, eta_t, eta_p, prices):
     # Parameters
 
     m.min_cap = 0  # no negative discharging
-    m.max_cap = pc_max  # don’t charge over
-    eta_p = Béka1.eta_p
-    eta_t = Béka1.eta_t
+    m.max_cap = Béka1.P  # don’t charge over
     # Variables
     m.buy = pyo.Var(m.t, bounds=(0, pc_max), initialize=0)  # Buy from grid
     m.sell = pyo.Var(m.t, bounds=(0, pc_max), initialize=0)  # Sell to grid
-    m.C = pyo.Var(m.t, bounds=(0, pc_max), initialize=0)  # Plant state
+    m.C = pyo.Var(m.t, bounds=(0, m.max_cap), initialize=0)  # Plant state
     m.y = pyo.Var(m.t, domain=pyo.Binary) # binary variable
     print("2 - változók definiálva")
 
@@ -43,19 +41,19 @@ def plant_model(pc_max, pd_max, eta_t, eta_p, prices):
     # FLH beállítása korlátnak
 
     def annual_cycle_limit(m):
-        return sum(m.sell[t] for t in m.t) <= Béka1.FLH1 * pd_max
+        return sum(m.sell[t] for t in m.t) <= FLH * pd_max
 
     m.cycle_limit = pyo.Constraint(rule=annual_cycle_limit)
 
     # Make sure plant does not charge and discharge at the same time
 
     def buy_sell_logic(m, t):
-        return m.buy[t] <= pc_max
+        return m.buy[t] <= pc_max * m.y[t]
 
     m.buy_logic = pyo.Constraint(m.t, rule=buy_sell_logic)
 
     def sell_logic(m, t):
-        return m.sell[t] <= pd_max
+        return m.sell[t] <= pd_max * (1 - m.y[t])
 
     m.sell_logic = pyo.Constraint(m.t, rule=sell_logic)
 
@@ -100,9 +98,11 @@ def plant_model(pc_max, pd_max, eta_t, eta_p, prices):
 
     results = solver.solve(m, tee=True)
 
-    profit = pyo.value(m.objective)
-    print("Total profit:", profit)
+    profit1 = pyo.value(m.objective)
+    print("Total profit:", profit1)
     print("5 - solver vége")
+    print("Cycle limit RHS:", FLH * pd_max)
+    print("Cycle limit LHS1:", sum(pyo.value(m.sell[t]) for t in m.t))
 
     buy_hist = [pyo.value(m.buy[t]) for t in m.t]
     sell_hist = [pyo.value(m.sell[t]) for t in m.t]

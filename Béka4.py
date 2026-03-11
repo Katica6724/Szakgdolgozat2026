@@ -24,19 +24,22 @@ def main():
         Béka1.pc_max,
         Béka1.pd_max,
         Béka1.eta_t, Béka1.eta_p,
-        prices_year
+        prices_year,
+        Béka1.FLH1
     )
     df_results2 = Béka2_2.plant_model(
         Béka1.pc_max,
         Béka1.pd_max,
         Béka1.eta_t, Béka1.eta_p,
-        prices_year
+        prices_year,
+        Béka1.FLH2
     )
     df_results3 = Béka2_3.plant_model(
         Béka1.pc_max,
         Béka1.pd_max,
         Béka1.eta_t, Béka1.eta_p,
-        prices_year
+        prices_year,
+        Béka1.FLH3
     )
 
     print("MODELL LEFUTOTT")
@@ -47,85 +50,32 @@ def main():
     # Plotting
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
-
-
-    # Line plot for cumulative profit 1
-    ax1.plot(df_results1['Datetime'], df_results1['Cumulative Profit'], label='Cumulative Profit')
-    ax1.set_xlabel('Datetime')
-    ax1.set_ylabel('Cumulative Profit (EUR)', color='k')
+    # Ábra Kumulatív profit 1
+    ax1.plot(df_results1['Datetime'], df_results1['Cumulative Profit'], label='Kumulatív profit (FLH = 500)', color='g')
+    ax1.plot(df_results2['Datetime'], df_results2['Cumulative Profit'], label='Kumulatív profit (FLH = 1000)', color='r')
+    ax1.plot(df_results3['Datetime'], df_results3['Cumulative Profit'], label='Kumulatív profit (FLH = 2000)', color='b')
+    ax1.set_xlabel('Dátum')
+    ax1.set_ylabel('Kumulatív profit (EUR)', color='k')
     ax1.tick_params(axis='y', labelcolor='k')
-
-    # Twin the axes for buy/sell plots
-    ax2 = ax1.twinx()
-
-    # Line plots for buy/sell of each node
-    ax2.plot(df_results1['Datetime'], df_results1['Charge(MW)'], label='Charge(MW)', color='g')
-    ax2.plot(df_results1['Datetime'], df_results1['Discharge(MW)'], label='Discharge(MW)', color='r')
-
-    ax2.set_ylabel('Charge/Discharge (MW)', color='k')
-    ax2.tick_params(axis='y', labelcolor='k')
-
-    # Set labels and title
-    plt.title('Plant Operations and Profit Over Time 1')
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    plt.title('Kumulatív profit 1')
+    ax1.legend(loc='upper left')
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
 
-    # Line plot for cumulative profit 2
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-
-    ax1.plot(df_results2['Datetime'], df_results2['Cumulative Profit'], label='Cumulative Profit')
-    ax1.set_xlabel('Datetime')
-    ax1.set_ylabel('Cumulative Profit (EUR)', color='k')
-    ax1.tick_params(axis='y', labelcolor='k')
-
-    # Twin the axes for buy/sell plots
-    ax2 = ax1.twinx()
+    # Plotting
+    fig, bx1 = plt.subplots(figsize=(12, 6))
 
     # Line plots for buy/sell of each node
-    ax2.plot(df_results2['Datetime'], df_results2['Charge(MW)'], label='Charge(MW)', color='g')
-    ax2.plot(df_results2['Datetime'], df_results2['Discharge(MW)'], label='Discharge(MW)', color='r')
-
-    ax2.set_ylabel('Charge/Discharge (MW)', color='k')
-    ax2.tick_params(axis='y', labelcolor='k')
-
-    # Set labels and title
-    plt.title('Plant Operations and Profit Over Time 2')
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    bx1.plot(df_results1['Datetime'], df_results1['Charge(MW)'], label='Charge(MW)', color='g')
+    bx1.plot(df_results1['Datetime'], df_results1['Discharge(MW)'], label='Discharge(MW)', color='r')
+    bx1.set_ylabel('Charge/Discharge (MW)', color='k')
+    bx1.tick_params(axis='y', labelcolor='k')
+    bx1.legend(loc='upper left')
     plt.xticks(rotation=45)
+    plt.title('Plant Operations 1')
     plt.tight_layout()
     plt.show()
 
-    # Line plot for cumulative profit 3
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-
-    ax1.plot(df_results3['Datetime'], df_results3['Cumulative Profit'], label='Cumulative Profit')
-    ax1.set_xlabel('Datetime')
-    ax1.set_ylabel('Cumulative Profit (EUR)', color='k')
-    ax1.tick_params(axis='y', labelcolor='k')
-
-    # Twin the axes for buy/sell plots
-    ax2 = ax1.twinx()
-
-    # Line plots for buy/sell of each node
-    ax2.plot(df_results3['Datetime'], df_results3['Charge(MW)'], label='Charge(MW)', color='g')
-    ax2.plot(df_results3['Datetime'], df_results3['Discharge(MW)'], label='Discharge(MW)', color='r')
-
-    ax2.set_ylabel('Charge/Discharge (MW)', color='k')
-    ax2.tick_params(axis='y', labelcolor='k')
-
-    # Set labels and title
-    plt.title('Plant Operations and Profit Over Time 3')
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
 if __name__ == "__main__":
     main()
