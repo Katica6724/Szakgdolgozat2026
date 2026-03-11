@@ -2,21 +2,26 @@ print("BÉKA2 FÁJL BETÖLTŐDÖTT")
 import Béka0 , Béka1
 import pandas as pd
 import pyomo.environ as pyo
+import gurobipy as gp
+import numpy as np
 
-
-def plant_model(pc_max, pd_max, eta, prices):
+def plant_model(pc_max, pd_max, eta_t, eta_p, prices):
     print("A - beléptem a függvénybe")
+    print("prices_year type:", type(prices))
+    print("prices_year length:", len(prices))
 
     m = pyo.ConcreteModel()
     print("B - modell létrehozva")
-
-    print("C - tovább megyünk")
+    print(type(prices))
 
     # time is what we will use as the index
     m.t = pyo.RangeSet(0, len(prices)-1)
     # Parameters
+
     m.min_cap = 0  # no negative discharging
     m.max_cap = pc_max  # don’t charge over
+    eta_p = Béka1.eta_p
+    eta_t = Béka1.eta_t
     # Variables
     m.buy = pyo.Var(m.t, bounds=(0, pc_max), initialize=0)  # Buy from grid
     m.sell = pyo.Var(m.t, bounds=(0, pc_max), initialize=0)  # Sell to grid
@@ -31,7 +36,7 @@ def plant_model(pc_max, pd_max, eta, prices):
         if t == m.t.first():
             return m.C[t] == m.max_cap
         else:
-            return m.C[t] == m.C[t-1] + eta*m.buy[t] - m.sell[t]/eta
+            return m.C[t] == m.C[t-1] + eta_p*m.buy[t] - m.sell[t]/eta_t
 
     m.storage_state = pyo.Constraint(m.t, rule=storage_state)
 
@@ -42,75 +47,63 @@ def plant_model(pc_max, pd_max, eta, prices):
 
     m.cycle_limit = pyo.Constraint(rule=annual_cycle_limit)
 
-
     # Make sure plant does not charge and discharge at the same time
 
     def buy_sell_logic(m, t):
-        return m.buy[t] <= pc_max * m.y[t]
+        return m.buy[t] <= pc_max
 
     m.buy_logic = pyo.Constraint(m.t, rule=buy_sell_logic)
 
     def sell_logic(m, t):
-        return m.sell[t] <= pd_max * (1 - m.y[t])
+        return m.sell[t] <= pd_max
 
     m.sell_logic = pyo.Constraint(m.t, rule=sell_logic)
 
     # make sure plant does not charge above the limit
     def over_charge(m, t):
-        return m.buy[t] <= (m.max_cap - m.C[t]) / eta
+        return eta_p * m.buy[t] + m.C[t] <= m.max_cap
 
     m.over_charge = pyo.Constraint(m.t, rule=over_charge)
 
     def over_discharge(m, t):
-        return m.sell[t] <= m.C[t] * eta
+        return m.sell[t] <= eta_t * m.C[t]
 
     m.over_discharge = pyo.Constraint(m.t, rule=over_discharge)
 
-    # Plant cannot store more energy than its maximum capacity
-    def charge_less_than_capacity(m, t):
-        return m.C[t] <= m.max_cap
-
-    m.charge_constraint = pyo.Constraint(m.t, rule=charge_less_than_capacity)
-
-    # Plant cannot be zero
-    def zero_bound_capacity(m, t):
-        return m.C[t] >= m.min_cap
-
-    m.zero_bound_capacity = pyo.Constraint(m.t, rule=zero_bound_capacity)
-
-    # Positive Buy/Sell values only
-    def buy_positive(m,t):
-        return m.buy[t] >= 0
-
-    m.buy_positive = pyo.Constraint(m.t, rule=buy_positive)
-
-    def sell_positive(m,t):
-        return m.sell[t] >= 0
-
-    m.sell_positive = pyo.Constraint(m.t, rule=sell_positive)
     print("3 - constraint kész")
     print("Időlépések száma:", len(prices))
+
+    print("\n---- CONSTRAINT ÖSSZESÍTÉS ----")
+    print("Összes constraint:",
+          len(list(m.component_data_objects(pyo.Constraint))))
+    print("Van NaN az árakban?", np.isnan(prices).any())
+    print("Hány darab NaN?", np.isnan(prices).sum())
 
     #OBJECTIVE FUNCTION
 
     def objective(m):
-        profit = sum(
-            (m.sell[t] * (prices[t])) - (m.buy[t] * (prices[t]))for t in m.t) - Béka1.Ctot_1
-        return profit
+        return sum(
+            m.sell[t] * (prices[t] - Béka1.Ctot_1)
+            - m.buy[t] * prices[t]
+            for t in m.t
+        )
 
     m.objective = pyo.Objective(rule=objective, sense=pyo.maximize)
 
     # Solve the model
 
+    solver = pyo.SolverFactory("gurobi")
 
-    solver = pyo.SolverFactory('highs')
+    print("Min price:", min(prices))
+    print("Max price:", max(prices))
     print("4 - solver indul")
+
     results = solver.solve(m, tee=True)
 
-    profit = m.objective.expr()
+    profit = pyo.value(m.objective)
+    print("Total profit:", profit)
     print("5 - solver vége")
 
-    charge_hist = [pyo.value(m.C[t]) for t in m.t]
     buy_hist = [pyo.value(m.buy[t]) for t in m.t]
     sell_hist = [pyo.value(m.sell[t]) for t in m.t]
 
@@ -132,7 +125,7 @@ def plant_model(pc_max, pd_max, eta, prices):
     })
 
     df_results['Cumulative Profit'] = df_results['Profit(EUR)'].cumsum()
-
+    print(df_results['Cumulative Profit'])
     print("7 - return előtt")
 
     return df_results

@@ -1,4 +1,4 @@
-import Béka2
+import Béka2_1
 
 def main():
     print("FUTTATÁS ELINDULT")

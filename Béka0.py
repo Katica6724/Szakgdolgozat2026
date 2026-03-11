@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import pandas as pd
 import glob
-import numpy as np
+
 import csv
 import matplotlib.pyplot as plt
 import math
@@ -47,6 +47,7 @@ df_all = df_all.sort_values(
 
 # Ár tömb
 prices = df_all["Price"].to_numpy()
+
 
 
 

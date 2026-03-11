@@ -28,11 +28,11 @@ Cqmt_1 = Cft + Cvt * (FLH1 / 1000) # €/kW-year
 Cqmt_2 = Cft + Cvt * (FLH2 / 1000) # €/kW-year
 Cqmt_3 = Cft + Cvt * (FLH3 / 1000) # €/kW-year
 
-# tárolás teljes ktg.
+# tárolás teljes ktg.(EUR/mWh)
 
-Ctot_1 = (Capex1*CRF+Cqmt_1)*1000/FLH1
-Ctot_2 = (Capex2*CRF+Cqmt_2)*1000/FLH2
-Ctot_3 = ((Capex3*CRF+Cqmt_3)*1000/FLH3)
+Ctot_1 = (Capex2 * CRF + Cqmt_1) / FLH1
+Ctot_2 = (Capex2 * CRF + Cqmt_2) / FLH2
+Ctot_3 = (Capex2 * CRF + Cqmt_3) / FLH3
 
 # Energia tárolás határai
 
@@ -40,3 +40,8 @@ pc_max = 80
 pd_max = 80
 P = 600
 eta = 0.8 # roundtrip efficiency
+eta_p = 0.9
+eta_t = 0.89
+print(Ctot_1)
+print(Ctot_2)
+print(Ctot_3)
