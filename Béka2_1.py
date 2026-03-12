@@ -5,7 +5,7 @@ import pyomo.environ as pyo
 import gurobipy as gp
 import numpy as np
 
-def plant_model(pc_max, pd_max, eta_t, eta_p, prices, FLH):
+def plant_model(pc_max, pd_max, eta_t, eta_p, prices, FLH, dates):
     print("A - beléptem a függvénybe")
     print("prices_year type:", type(prices))
     print("prices_year length:", len(prices))
@@ -116,7 +116,7 @@ def plant_model(pc_max, pd_max, eta_t, eta_p, prices, FLH):
     print("6 - df_results kész")
 
     df_results = pd.DataFrame({
-        'Datetime': Béka0.df_all['Delivery Day'][:len(m.t)],
+        'Datetime': dates,
         'Hour': Béka0.df_all['Hour'][:len(m.t)],
         'Price(EUR/MWh)': prices[:len(m.t)],
         'Charge(MW)': buy_hist,
