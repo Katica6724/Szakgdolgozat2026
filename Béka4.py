@@ -1,12 +1,13 @@
 import Béka0
 import Béka1
 import Béka2_1, Béka2_2, Béka2_3
+import pandas as pd
 
 def main():
     print("FUTTATÁS ELINDULT")
 
     # Modell futtatása
-    year = 2021
+    year = 2024
     df_year = Béka0.df_all[Béka0.df_all['Delivery Day'].dt.year == year]
     df_year = df_year.copy()
 
@@ -47,6 +48,14 @@ def main():
     )
 
     print("MODELL LEFUTOTT")
+
+    # Excel export
+
+    with pd.ExcelWriter(f"C:\\Users\\nagyk\\OneDrive\\Desktop\\szakdoga\\Szakdoga\\Opt eredmények\\Eredmények_{year}.xlsx", engine="openpyxl") as writer:
+        df_results1.to_excel(writer, sheet_name="FLH_500", index=False)
+        df_results2.to_excel(writer, sheet_name="FLH_1000", index=False)
+        df_results3.to_excel(writer, sheet_name="FLH_2000", index=False)
+
 
     # Plot the strategy and cumulative profit over time
     import matplotlib.pyplot as plt
